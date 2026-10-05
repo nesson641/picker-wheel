@@ -1,0 +1,131 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>🌸 Lucky Wheel</title>
+<style>
+body{text-align:center;font-family:Arial;background:linear-gradient(135deg,#ffe4ec,#e5dcff);color:#684d69}
+canvas{max-width:90vw}
+textarea{width:280px;height:130px;border:0;border-radius:15px;padding:10px;font-size:16px}
+button{padding:12px 22px;margin:8px;border:0;border-radius:25px;background:#b985d6;color:white;font-weight:bold;cursor:pointer}
+#pop{display:none;position:fixed;inset:0;background:#0005;align-items:center;justify-content:center}
+.card{background:white;padding:35px;border-radius:30px;box-shadow:0 10px 40px #0005}
+#winner{font-size:40px;color:#b06dcc;font-weight:bold}
+.wheel{position:relative;display:inline-block}
+.pin{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:38px;z-index:2}
+</style>
+</head>
+
+<body>
+
+<h1>🌸 Lucky Wheel 🌸</h1>
+
+<div class="wheel">
+ <div class="pin">🔻</div>
+ <canvas id="c" width="450" height="450"></canvas>
+</div><br>
+
+<textarea id="list">An
+Bình
+Chi
+Duy
+Hà
+Lan
+Minh
+Ngọc</textarea><br>
+
+<button onclick="update()">🔄 Cập nhật</button>
+<button onclick="spin()">🎡 QUAY!</button>
+
+<div id="pop">
+ <div class="card">
+  <h2>🎉 CHÚC MỪNG 🎉</h2>
+  <div id="winner"></div>
+  <p>🌸 Đã được chọn!</p>
+  <button onclick="pop.style.display='none'">Đóng 💖</button>
+ </div>
+</div>
+
+<script>
+let c=document.getElementById("c"),x=c.getContext("2d"),
+a=0,n=[],busy=0,last=0;
+
+function update(){
+ n=list.value.split("\n").filter(x=>x.trim());
+ draw();
+}
+
+function draw(){
+ x.clearRect(0,0,450,450);
+ let w=2*Math.PI/n.length;
+
+ n.forEach((s,i)=>{
+  x.beginPath();x.moveTo(225,225);
+  x.arc(225,225,200,a+i*w,a+(i+1)*w);
+  x.fillStyle=`hsl(${i*360/n.length},70%,80%)`;
+  x.fill();x.stroke();
+
+  x.save();x.translate(225,225);
+  x.rotate(a+(i+.5)*w);
+  x.textAlign="right";
+  x.fillStyle="#654";
+  x.font="bold 25px Arial";
+  x.fillText(s,185,5);
+  x.restore();
+ });
+}
+
+function sound(freq=300,d=.06){
+ let z=new AudioContext(),o=z.createOscillator(),g=z.createGain();
+ o.type="sine";
+ o.frequency.value=freq;
+ g.gain.setValueAtTime(.025,z.currentTime);
+ g.gain.exponentialRampToValueAtTime(.001,z.currentTime+d);
+ o.connect(g);g.connect(z.destination);
+ o.start();o.stop(z.currentTime+d);
+}
+
+function spin(){
+ if(busy||n.length<2)return;
+ busy=1;
+
+ let t=0,start=a,end=a+Math.PI*2*(5+Math.random()*3);
+
+ function run(){
+  t+=16;
+  let p=Math.min(t/3500,1);
+
+  a=start+(end-start)*(1-(1-p)**4);
+  draw();
+
+  if(Date.now()-last>150){
+   sound(260,.06);
+   last=Date.now();
+  }
+
+  if(p<1)requestAnimationFrame(run);
+  else{
+   busy=0;
+
+   sound(520,.15);
+   setTimeout(()=>sound(700,.2),120);
+
+   let w=2*Math.PI/n.length;
+   let i=Math.floor(
+    ((3*Math.PI/2-a)%(2*Math.PI)+2*Math.PI)
+    %(2*Math.PI)/w
+   );
+
+   winner.textContent=n[i];
+   pop.style.display="flex";
+  }
+ }
+ run();
+}
+
+update();
+</script>
+
+</body>
+</html>
